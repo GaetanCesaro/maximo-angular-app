@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr" lang="fr">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Maximo App</title>
+        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="style.css"/>
+        <!--[if lt IE 9]>
+            <script src="html5shiv.js"></script>
+        <![endif]-->
+
+    </head>
+    <body ng-app="MaximoApp" ng-controller="MaximoAppCtrl">
+        <div class="container">
+            <ul class="nav nav-pills spacer">
+                <li ng-repeat="menu in menus" ng-class="{ active: menu == menuCourant }">
+                    <a href="#{{menu.value}}">{{menu.label}}</a>
+                </li>
+                <!--li>
+                    <form name="searchForm" ng-submit="rechercherMails(recherche)">
+                        <input name="searchInput" type="text" ng-model="recherche" required/>
+                        <span style="color:red" ng-show="searchForm.searchInput.$dirty && searchForm.searchInput.$invalid">
+                            <span ng-show="searchForm.searchInput.$error.required">Obligatoire !</span>
+                        </span>
+                    </form>
+                </li-->
+            </ul>
+
+            <!-- HOME -->
+            <div ng-show="menuCourant.value == 'HOME'">
+                <div class="well spacer">
+                    <table class="table" ng-show="menuCourant != null">
+                        <thead>
+                            <tr>
+                                <th>Attribut</th>
+                                <th>Valeur filtrée</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="filter in filters">
+                                <td>{{filter.label}}</td>
+                                <td><input name="searchInput" type="text" ng-model="filter.value"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table class="table">
+                        <tr>
+                            <td><a href="#WO">Interventions associées</a></td>
+                            <td><a href="#ASSET">Actifs associés</a></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- WORKORDERS -->
+            <div ng-show="menuCourant.value == 'WO'">
+                <!-- LOADING... -->
+                <div ng-show="itemCourant == null &amp;&amp; items != null && items.length == 0 &amp;&amp; loading == true">
+                    <br/><br/><br/><br/><br/><br/>
+                    <img src="images/wait.gif"/>
+                </div>
+
+                <!-- LISTE WORKORDERS -->
+                <div ng-show="itemCourant == null &amp;&amp; items.length > 0">
+                    <div class="alert alert-info spacer">
+                        <button ng-disabled="currentPage == 0" ng-click="currentPage=currentPage-1">
+                            Previous
+                        </button>
+                        {{currentPage+1}}/{{numberOfPages()}}
+                        <button ng-disabled="currentPage >= items.length/pageSize - 1" ng-click="currentPage=currentPage+1">
+                            Next
+                        </button>
+                        Total : {{items.length}}
+                    </div>
+
+                    <table class="table table-striped table-hover" ng-show="menuCourant != null">
+                        <thead>
+                            <tr>
+                                <th ng-click="orderByMe('Attributes.WONUM.content')">Identifiant</th>
+                                <th ng-click="orderByMe('Attributes.DESCRIPTION.content')">Description</th>
+                                <th ng-click="orderByMe('Attributes.STATUS.content')">Statut</th>
+                            </tr>
+                            <tr>
+                                <th><input class="form-control" type="text" ng-model="search.Attributes.WONUM.content" placeholder="Filtrer"/></th>
+                                <th><input class="form-control" type="text" ng-model="search.Attributes.DESCRIPTION.content"/></th>
+                                <th><input class="form-control" type="text" ng-model="search.Attributes.STATUS.content" ng-submit="numberOfPages()"/></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="item in items  | filter:search | orderBy:myOrderBy | startFrom:currentPage*pageSize | limitTo:pageSize" class="clickable" ng-click="versWOItem(menuCourant, item)">
+                                <td>{{item.Attributes.WONUM.content}}</td>
+                                <td>{{item.Attributes.DESCRIPTION.content}}</td>
+                                <td>{{item.Attributes.STATUS.content}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- AFFICHAGE D'UN WORKORDER -->
+                <div ng-show="itemCourant != null">
+                    <div class="alert alert-info spacer">
+                    <button onClick="history.go(-1);return true;">
+                        Retour
+                    </button>
+                    </div>
+
+                    <div class="spacer">
+                        <div class="well">
+                            <h1>{{itemCourant.Attributes.WONUM.content}}</h1>
+                            <p><label>Description :</label> <span>{{itemCourant.Attributes.DESCRIPTION.content}}</span></p>
+                            <p><label>Statut :</label> <span>{{itemCourant.Attributes.STATUS.content}}</span></p>
+                            <p><label>Emplacement :</label> <span>{{itemCourant.Attributes.LOCATION.content}}</span></p>
+                            <p><label>Actif :</label> <span>{{itemCourant.Attributes.ASSET.content}}</span></p>
+                            <p><label>Modifié par :</label> <span>{{itemCourant.Attributes.CHANGEBY.content}}</span></p>
+                            <p><label>Modifié le :</label> <span>{{itemCourant.Attributes.CHANGEDATE.content}}</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ASSETS -->
+            <div ng-show="menuCourant.value == 'ASSET'">
+                <!-- LOADING... -->
+                <div ng-show="itemCourant == null &amp;&amp; items != null && items.length == 0 &amp;&amp; loading == true">
+                    <br/><br/><br/><br/><br/><br/>
+                    <img src="images/wait.gif"/>
+                </div>
+
+                <!-- LISTE ASSETS -->
+                <div ng-show="itemCourant == null &amp;&amp; items.length > 0">
+                    <div class="alert alert-info spacer">
+                        <button ng-disabled="currentPage == 0" ng-click="currentPage=currentPage-1">
+                            Previous
+                        </button>
+                        {{currentPage+1}}/{{numberOfPages()}}
+                        <button ng-disabled="currentPage >= items.length/pageSize - 1" ng-click="currentPage=currentPage+1">
+                            Next
+                        </button>
+                        Total : {{items.length}}
+                    </div>
+
+                    <table class="table table-striped table-hover" ng-show="menuCourant != null">
+                        <thead>
+                            <tr>
+                                <th ng-click="orderByMe('Attributes.ASSETNUM.content')">Identifiant</th>
+                                <th ng-click="orderByMe('Attributes.DESCRIPTION.content')">Description</th>
+                                <th ng-click="orderByMe('Attributes.STATUS.content')">Statut</th>
+                            </tr>
+                            <tr>
+                                <th><input class="form-control" type="text" ng-model="search.Attributes.ASSETNUM.content" placeholder="Filtrer"/></th>
+                                <th><input class="form-control" type="text" ng-model="search.Attributes.DESCRIPTION.content"/></th>
+                                <th><input class="form-control" type="text" ng-model="search.Attributes.STATUS.content" ng-submit="numberOfPages()"/></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="item in items  | filter:search | orderBy:myOrderBy | startFrom:currentPage*pageSize | limitTo:pageSize" class="clickable" ng-click="versASSETItem(menuCourant, item)">
+                                <td>{{item.Attributes.ASSETNUM.content}}</td>
+                                <td>{{item.Attributes.DESCRIPTION.content}}</td>
+                                <td>{{item.Attributes.STATUS.content}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- AFFICHAGE D'UN WORKORDER -->
+                <div ng-show="itemCourant != null">
+                    <div class="alert alert-info spacer">
+                    <button onClick="history.go(-1);return true;">
+                        Retour
+                    </button>
+                    </div>
+
+                    <div class="spacer">
+                        <div class="well">
+                            <h1>{{itemCourant.Attributes.ASSETNUM.content}}</h1>
+                            <p><label>Description :</label> <span>{{itemCourant.Attributes.DESCRIPTION.content}}</span></p>
+                            <p><label>Statut :</label> <span>{{itemCourant.Attributes.STATUS.content}}</span></p>
+                            <p><label>Emplacement :</label> <span>{{itemCourant.Attributes.LOCATION.content}}</span></p>
+                            <p><label>Actif :</label> <span>{{itemCourant.Attributes.ASSET.content}}</span></p>
+                            <p><label>Modifié par :</label> <span>{{itemCourant.Attributes.CHANGEBY.content}}</span></p>
+                            <p><label>Modifié le :</label> <span>{{itemCourant.Attributes.CHANGEDATE.content}}</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.29/angular.min.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.29/angular-sanitize.min.js"></script>
+        <!--script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular-animate.js"></script-->
+        <script type="text/javascript" src="maximo.js"></script>
+    </body>
+</html>
